@@ -50,3 +50,4 @@ print("历史预测均方差MSE：" + str(test_mse_score))
 
 res = modelRes.predict(predict_data)
 print(str(inputPd['日期'][2429])+"下一个交易日的收盘价： "+ str(res[0]))
+# git test
