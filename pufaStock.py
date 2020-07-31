@@ -52,3 +52,4 @@ res = modelRes.predict(predict_data)
 print(str(inputPd['日期'][2429])+"下一个交易日的收盘价： "+ str(res[0]))
 # git test
 #test liuyun
+# git test fetch
