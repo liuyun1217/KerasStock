@@ -36,20 +36,20 @@ def build_model():
     model.add(layers.Dense(64, activation='relu', input_shape=(train_data.shape[1],)))
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(1))
-    model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
+    #model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
     model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
     return model
 
 
 model = build_model()
 modelRes = model
-modelRes.fit(train_data, train_targets, epochs=80, batch_size=16, verbose=0)
+history = modelRes.fit(train_data, train_targets, epochs=200, batch_size=16, verbose=2,validation_data=(test_data,test_targets))
 test_mse_score, test_mae_score = modelRes.evaluate(test_data, test_targets)
 print("历史预测误差MAE：" + str(test_mae_score))
 print("历史预测均方差MSE：" + str(test_mse_score))
 
 res = modelRes.predict(predict_data)
-print(str(inputPd['日期'][2429])+"下一个交易日的收盘价： "+ str(res[0]))
+print(str(inputPd['日期'][2429])+"下一个交易日的预测收盘价： "+ str(res[0]))
 # git test
 #test liuyun
 # git test fetch
