@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+@Time ： 2020/8/1 9:15 AM
+@Auth ： LiuYun ZhaoYing
+@File ：getData.py
+@IDE ：PyCharm Community Edition
+
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
