@@ -86,7 +86,8 @@ print(all_predict_res)
 min_mae = min(all_predict_res.values())
 print(min_mae)
 best_predict_res = list(all_predict_res.keys())[list(all_predict_res.values()).index(min_mae)]
-print(inputPd['日期'][-2:-1].astype(str)+"下一个交易日的预测收盘价： "+ str(best_predict_res + ', mae误差为：'+ str(min_mae)))
+print(inputPd['日期'][-2:-1].astype(str)+"下一个交易日的预测收盘价： "+ str(best_predict_res + ', mae误差为：'))
+print(min_mae)
 #
 # average_mae_history = [np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs)]
 # plt.plot(range(1, len(average_mae_history) +1),average_mae_history)
