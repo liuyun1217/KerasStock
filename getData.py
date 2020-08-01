@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 def excel2Pd(input):
     inputFile = input
     inputPd = pd.read_excel(inputFile)
-    print(inputPd.shape)
+    print(str(inputFile)+' all data shape is '+str(inputPd.shape))
     return inputPd
 
 def cav2Pd(input):
     inputFile = input
     inputPd = pd.read_csv(inputFile,encoding='gbk')
-    print(inputPd.shape)
+    print((inputFile)+' all data shape is '+ str(inputPd.shape))
     return inputPd
 
 def plotData(inputPd):
