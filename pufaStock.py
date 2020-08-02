@@ -37,20 +37,22 @@ if __name__ == '__main__':
     inputPd.replace('True',1)
     inputPd.replace('False', 0)
 
-    #ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
+    #下面是ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
     #需要指定数据里的最新时间
     new_time = np.datetime64('2020-07-03')
-
-    #只需要填写all_data，程序会自动分割训练数据和测试数据
-    all_data = K.cast_to_floatx(inputPd[['收盘价(元)', '最高价(元)', '最低价(元)', '成交额(百万)']].loc[inputPd['日期']<new_time].values)
-    all_targets = K.cast_to_floatx(inputPd[['收盘价(元)']].loc[inputPd['日期']<new_time].values)
-
-    #输入需要预测数据的条件，会自动选择最好的模型来预测下一个交易日的收盘价
-    predict_data = K.cast_to_floatx(inputPd[['收盘价(元)','最高价(元)','最低价(元)','成交额(百万)']].loc[inputPd['日期']==new_time].values)
-
+    #指定用于训练的列名
+    col_data = ['收盘价(元)', '最高价(元)', '最低价(元)', '成交额(百万)']
     #训练的轮数，先用1轮来跑通程序，然后改成10，50，100甚至更多来让训练更准确（也更慢）
     num_epochs = 1
-    #ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
+    #上面是ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
+
+
+    #程序会自动分割训练数据和测试数据
+    all_data = K.cast_to_floatx(inputPd[col_data].loc[inputPd['日期']<new_time].values)
+    all_targets = K.cast_to_floatx(inputPd[['收盘价(元)']].loc[inputPd['日期']<new_time].values)
+    #预测数据，会自动选择最好的模型来预测下一个交易日的收盘价
+    predict_data = K.cast_to_floatx(inputPd[col_data].loc[inputPd['日期']==new_time].values)
+
 
 
     allDataShape = [all_data.shape[1],]
