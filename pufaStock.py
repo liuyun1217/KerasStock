@@ -86,3 +86,5 @@ if __name__ == '__main__':
     # plt.xlabel('Epochs')
     # plt.ylabel('Validation MAE')
     # plt.show()
+
+#测试git push忽略文件夹
