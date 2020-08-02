@@ -16,6 +16,7 @@ from keras import backend as K
 from getData import excel2Pd
 import matplotlib.pyplot as plt
 from KData import getKData
+import datetime
 
 
 #定义模型的结构
@@ -33,13 +34,22 @@ if __name__ == '__main__':
     inputFile = './data/沪深300指数.xlsx'
     inputPd = excel2Pd(inputFile)
     inputPd.replace('None', 0)
+    inputPd.replace('True',1)
+    inputPd.replace('False', 0)
+
+    #ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
+    #需要指定数据里的最新时间
+    new_time = np.datetime64('2020-07-03')
 
     #只需要填写all_data，程序会自动分割训练数据和测试数据
-    all_data = K.cast_to_floatx(inputPd[['收盘价(元)','最高价(元)','最低价(元)','成交额(百万)']][:-1].values)
-    all_targets = K.cast_to_floatx(inputPd[['收盘价(元)']][1:].values)
+    all_data = K.cast_to_floatx(inputPd[['收盘价(元)', '最高价(元)', '最低价(元)', '成交额(百万)']].loc[inputPd['日期']<new_time].values)
+    all_targets = K.cast_to_floatx(inputPd[['收盘价(元)']].loc[inputPd['日期']<new_time].values)
 
     #输入需要预测数据的条件，会自动选择最好的模型来预测下一个交易日的收盘价
-    predict_data = K.cast_to_floatx(inputPd[['收盘价(元)','最高价(元)','最低价(元)','成交额(百万)']][-2:-1].values)
+    predict_data = K.cast_to_floatx(inputPd[['收盘价(元)','最高价(元)','最低价(元)','成交额(百万)']].loc[inputPd['日期']==new_time].values)
+    #ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
+
+
     allDataShape = [all_data.shape[1],]
     #构建模型网络结构
     model = build_model(allDataShape)
@@ -52,7 +62,7 @@ if __name__ == '__main__':
     all_scores = []
     all_mae_histories = []
     all_predict_res = {}
-    num_epochs = 100
+    num_epochs = 1
     for i in range(k):
         print('processing fold #', i)
         partial_train_data  = k_partial_train_data[i]
@@ -78,7 +88,7 @@ if __name__ == '__main__':
     print('挑选出最好的模型MAE为 %f' %min_mae)
     #用表现最好的模型去预测下一日的收盘价
     best_predict_res = list(all_predict_res.keys())[list(all_predict_res.values()).index(min_mae)]
-    print('该模型预测的'+inputPd['日期'][-2:-1].astype(str)+"下一个交易日的收盘价： "+ str(best_predict_res))
+    print('该模型预测的'+inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"下一个交易日的收盘价： "+ str(best_predict_res))
 
     #
     # average_mae_history = [np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs)]
