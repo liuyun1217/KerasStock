@@ -47,6 +47,9 @@ if __name__ == '__main__':
 
     #输入需要预测数据的条件，会自动选择最好的模型来预测下一个交易日的收盘价
     predict_data = K.cast_to_floatx(inputPd[['收盘价(元)','最高价(元)','最低价(元)','成交额(百万)']].loc[inputPd['日期']==new_time].values)
+
+    #训练的轮数，先用1轮来跑通程序，然后改成10，50，100甚至更多来让训练更准确（也更慢）
+    num_epochs = 1
     #ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
 
 
@@ -62,7 +65,6 @@ if __name__ == '__main__':
     all_scores = []
     all_mae_histories = []
     all_predict_res = {}
-    num_epochs = 1
     for i in range(k):
         print('processing fold #', i)
         partial_train_data  = k_partial_train_data[i]
