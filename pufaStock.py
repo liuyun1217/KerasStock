@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     #下面是ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
     #需要指定数据里的最新时间
-    new_time = np.datetime64('2020-07-03')
+    new_time = np.datetime64('2020-07-31')
     #指定用于训练的列名
     col_data = ['市盈率', '市盈率(TTM)', '市净率', '开盘价', '最高价', '最低价', '前收盘价', '涨跌幅', '振幅', '换手率', '指数成分上涨数量', '指数成分下跌数量',
                 '近期创阶段新高', '近期创阶段新低', '连涨天数', '连跌天数', '向上有效突破5日均线', '向下有效突破5日均线', '向上有效突破10日均线', '向下有效突破10日均线',
@@ -48,12 +48,14 @@ if __name__ == '__main__':
                 'MFI资金流向指标', '多空布林线', '量比']
     #训练的轮数，先用1轮来跑通程序，然后改成10，50，100甚至更多来让训练更准确（也更慢）
     num_epochs = 1
+    #预测的几天后的数据
+    predict_day = 2
     #上面是ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
 
 
     #程序会自动分割训练数据和测试数据
-    all_data = K.cast_to_floatx(inputPd[col_data].loc[inputPd['日期']<new_time].values)
-    all_targets = K.cast_to_floatx(inputPd[['沪深300']].loc[inputPd['日期']<new_time].values)
+    all_data = K.cast_to_floatx(inputPd[col_data].loc[inputPd['日期']<new_time].values)[:-predict_day]
+    all_targets = K.cast_to_floatx(inputPd[['沪深300']].loc[inputPd['日期']<new_time].values)[predict_day:]
     #预测数据，会自动选择最好的模型来预测下一个交易日的收盘价
     predict_data = K.cast_to_floatx(inputPd[col_data].loc[inputPd['日期']==new_time].values)
 
@@ -96,7 +98,7 @@ if __name__ == '__main__':
     print('挑选出最好的模型MAE为 %f' %min_mae)
     #用表现最好的模型去预测下一日的收盘价
     best_predict_res = list(all_predict_res.keys())[list(all_predict_res.values()).index(min_mae)]
-    print('该模型预测的'+inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"下一个交易日的收盘价： "+ str(best_predict_res))
+    print('该模型预测的'+inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"下"+str(predict_day)+"个交易日的收盘价： "+ str(best_predict_res))
 
     #
     # average_mae_history = [np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs)]
