@@ -21,7 +21,6 @@ def getKData(all_data,all_targets,k):
     k_val_data = []
     k_val_targets = []
     for i in range(k):
-
         val_data = all_data[i*num_val_samples: (i+1) * num_val_samples]
         val_targets = all_targets[i*num_val_samples: (i+1) * num_val_samples]
 
