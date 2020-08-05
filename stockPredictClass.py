@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-@Time ： 2020/8/1 9:15 AM
+@Time ： 2020/8/5 10:29 PM
 @Auth ： LiuYun ZhaoYing
-@File ：pufaStock.py
+@File ：stockPredictClass.py
 @IDE ：PyCharm Community Edition
 
 """
@@ -16,29 +16,30 @@ from getData import excel2Pd
 import matplotlib.pyplot as plt
 from KData import getKData
 import datetime
-
+from getStockDataUD import getUDData
 
 #定义模型的结构
-def build_model(allDataShape):
+def build_classModel(allDataShape):
     model = models.Sequential()
     model.add(layers.Dense(64, activation='relu', input_shape=(allDataShape)))
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(1))
-    #model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
-    model.compile(optimizer='rmsprop', loss='mae', metrics=['mae','mape','mse'])
+    model.add(layers.Dense(1, activation='sigmoid'))
+    model.compile(optimizer='rmsprop',  # 还可以通过optimizer = optimizers.RMSprop(lr=0.001)来为优化器指定参数
+                  loss='binary_crossentropy',  # 等价于loss = losses.binary_crossentropy
+                  metrics=['accuracy'])  # 等价于metrics = [metircs.binary_accuracy]
     return model
 
 if __name__ == '__main__':
+
     # 处理excel文件转化为pandas能处理的df格式
     inputFile = './data/沪深300指数.xlsx'
     inputPd = excel2Pd(inputFile)
     inputPd.replace('None', 0)
     inputPd.replace('True',1)
     inputPd.replace('False', 0)
+
+    UDData = getUDData(inputPd)
 
     #模型保存的路径
     models_save_path = './models'
@@ -53,23 +54,19 @@ if __name__ == '__main__':
                 'DMA平均线差', 'MACD', 'TRIX三重指数平滑平均', 'KDJ', 'RSI', 'VROC量变动速率', 'ARBR人气意愿指标', 'PSY心理指标', 'VR成交量比率',
                 'MFI资金流向指标', '多空布林线', '量比']
     #训练的轮数，先用1轮来跑通程序，然后改成10，50，100甚至更多来让训练更准确（也更慢）,目前最多设置过500，模型还在优化还能更多
-    num_epochs = 100
+    num_epochs = 10
     #预测的几天后的数据
     predict_day = 1
     #上面是ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
-
-
     #程序会自动分割训练数据和测试数据
     all_data = K.cast_to_floatx(inputPd[col_data].loc[inputPd['日期']<new_time].values)[:-predict_day]
-    all_targets = K.cast_to_floatx(inputPd[['沪深300']].loc[inputPd['日期']<new_time].values)[predict_day:]
+    all_targets = K.cast_to_floatx(inputPd[['UD']].loc[inputPd['日期']<new_time].values)[predict_day:]
     #预测数据，会自动选择最好的模型来预测下一个交易日的收盘价
     predict_data = K.cast_to_floatx(inputPd[col_data].loc[inputPd['日期']==new_time].values)
 
-
-
     allDataShape = [all_data.shape[1],]
     #构建模型网络结构
-    model = build_model(allDataShape)
+    model = build_classModel(allDataShape)
 
     #使用KData.py里的K-折线方法切割数据为多组训练数据和测试数据
     k = 4
@@ -77,7 +74,7 @@ if __name__ == '__main__':
 
     #开始训练
     all_scores = []
-    all_mae_histories = []
+    all_acc_histories = []
     all_dict_histories = []
     all_predict_res = {}
     for i in range(1,k):
@@ -90,43 +87,41 @@ if __name__ == '__main__':
 
         history = model.fit(partial_train_data, partial_train_targets, epochs=num_epochs, batch_size=8, verbose=0,
                             validation_data=(val_data,val_targets))
-        t,test_mae_score, test_mape_score,test_mse_score = model.evaluate(val_data, val_targets)
-        print("历史预测误差MAE：" + str(test_mae_score))
-        print("历史预测误差百分比MAPE：" + str(test_mape_score))
-        print("历史预测均方差MSE：" + str(test_mse_score))
-        model_name = models_save_path+'/'+str(new_time)+'_MAE'+str(int(test_mae_score))+'.h5'
+        test_bct_score,test_acc_score = model.evaluate(val_data, val_targets)
+        print("历史预测精确度：" + str(test_acc_score))
+        model_name = models_save_path+'/'+str(new_time)+'_ACC'+str(float(test_acc_score))+'.h5'
         model.save(model_name)
-        dict_history = history.history
-        all_dict_histories.append(dict_history)
-        all_scores.append(test_mae_score)
+        acc_history = history.history['val_accuracy']
+        history_dict = history.history
+        all_dict_histories.append(history_dict)
+        all_acc_histories.append(acc_history)
+        all_scores.append(test_acc_score)
         #break
         res = model.predict(predict_data)
-        all_predict_res[str(res)] = test_mae_score
+        all_predict_res[str(res)] = test_acc_score
 
     #找出表现最好（mape最小）的模型
-    min_mae = min(all_predict_res.values())
-    #算出mae的平均值，用于画图展示模型训练的趋势
-    mean_mae = np.mean(all_scores)
+    max_acc = max(all_predict_res.values())
+    #算出acc的平均值，用于画图展示模型训练的趋势
+    mean_acc = np.mean(all_scores)
     #print(all_scores)
-    print('K次训练模型误差MAE平均值为 %f' % mean_mae)
-    print('挑选出最好的模型误差MAE为 %f' %min_mae)
+    print('K次训练模型精确度平均值为 %f' % mean_acc)
+    print('挑选出最好的模型精确度为 %f' %max_acc)
     #用表现最好的模型去预测下一日的收盘价
-    best_predict_res = list(all_predict_res.keys())[list(all_predict_res.values()).index(min_mae)]
-    print('该模型预测的'+inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"下"+str(predict_day)+"个交易日的收盘价： "+ str(best_predict_res))
+    best_predict_res = list(all_predict_res.keys())[list(all_predict_res.values()).index(max_acc)]
+    print('该模型预测的'+inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"下"+str(predict_day)+"个交易日的涨的概率为： "+ str(best_predict_res))
     print(inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"的收盘价： "+ inputPd['沪深300'].loc[inputPd['日期']==new_time].astype(str))
 
 
-    #
-    acc_values = [np.mean([x['mae'][i] for x in all_dict_histories]) for i in range(num_epochs)]
-    val_acc_values = [np.mean([x['val_mae'][i] for x in all_dict_histories]) for i in range(num_epochs)]
+
+    acc_values = [np.mean([x['accuracy'][i] for x in all_dict_histories]) for i in range(num_epochs)]
+    val_acc_values = [np.mean([x['val_accuracy'][i] for x in all_dict_histories]) for i in range(num_epochs)]
     plt.clf()
     epochs = range(1, num_epochs+ 1)
-    plt.plot(epochs,acc_values,'bo',label='Training mae')
-    plt.plot(epochs,val_acc_values,'b',label='Validation mae')
-    plt.title('Training and validation mae')
+    plt.plot(epochs,acc_values,'bo',label='Training acc')
+    plt.plot(epochs,val_acc_values,'b',label='Validation acc')
+    plt.title('Training and validation accuracy')
     plt.xlabel('Epochs')
-    plt.ylabel('mae')
+    plt.ylabel('Acc')
     plt.legend()
     plt.show()
-
-#测试git push忽略文件夹
