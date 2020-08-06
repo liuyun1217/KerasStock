@@ -30,4 +30,4 @@ if __name__ == '__main__':
     inputPd.replace('False', 0)
 
     UDData = getUDData(inputPd)
-    print(UDData['UD'])
+    print(UDData)
