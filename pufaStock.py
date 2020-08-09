@@ -24,9 +24,6 @@ def build_model(allDataShape):
     model.add(layers.Dense(64, activation='relu', input_shape=(allDataShape)))
     model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(1))
     #model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
     model.compile(optimizer='rmsprop', loss='mae', metrics=['mae','mape','mse'])
@@ -45,7 +42,7 @@ if __name__ == '__main__':
 
     #下面是ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
     #需要指定数据里的最新时间
-    new_time = np.datetime64('2020-08-06')
+    new_time = np.datetime64('2020-08-07')
     #指定用于训练的列名
     col_data = ['市盈率', '市盈率(TTM)', '市净率', '开盘价', '最高价', '最低价', '前收盘价', '涨跌幅', '振幅', '换手率', '指数成分上涨数量', '指数成分下跌数量',
                 '近期创阶段新高', '近期创阶段新低', '连涨天数', '连跌天数', '向上有效突破5日均线', '向下有效突破5日均线', '向上有效突破10日均线', '向下有效突破10日均线',
@@ -88,7 +85,7 @@ if __name__ == '__main__':
         val_targets = k_val_targets[i]
         print('本模型的：训练数据量%d，测试数据量%d' %(len(partial_train_targets),len(val_targets)))
 
-        history = model.fit(partial_train_data, partial_train_targets, epochs=num_epochs, batch_size=8, verbose=0,
+        history = model.fit(partial_train_data, partial_train_targets, epochs=num_epochs, batch_size=4, verbose=0,
                             validation_data=(val_data,val_targets))
         t,test_mae_score, test_mape_score,test_mse_score = model.evaluate(val_data, val_targets)
         print("历史预测误差MAE：" + str(test_mae_score))
@@ -112,7 +109,10 @@ if __name__ == '__main__':
     print('挑选出最好的模型误差MAE为 %f' %min_mae)
     #用表现最好的模型去预测下一日的收盘价
     best_predict_res = list(all_predict_res.keys())[list(all_predict_res.values()).index(min_mae)]
+    # print(list(all_predict_res.keys()))
+    # mean_predict_res = np.mean(list(all_predict_res.keys()))
     print('该模型预测的'+inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"下"+str(predict_day)+"个交易日的收盘价： "+ str(best_predict_res))
+    # print(inputPd['日期'].loc[inputPd['日期'] == new_time].astype(str) + "下" + str(predict_day) + "个交易日的平均收盘价： " + str(mean_predict_res))
     print(inputPd['日期'].loc[inputPd['日期']==new_time].astype(str)+"的收盘价： "+ inputPd['沪深300'].loc[inputPd['日期']==new_time].astype(str))
 
 

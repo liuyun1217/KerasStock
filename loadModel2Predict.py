@@ -12,14 +12,18 @@ import numpy as np
 import os
 from getData import excel2Pd
 from keras import backend as K
+import re
 
 if __name__ == '__main__':
     models_save_path = './models'
 
     #需要指定模型的训练时间
-    model_time = np.datetime64('2020-08-05')
+    model_time = np.datetime64('2020-08-07')
+    #选择MAE小于多少的模型进行预测
+    model_mae = 50
+    model_nmaeMae = '_MAE'+str(model_mae)
     model_name_pre = str(model_time)+'_MAE'
-    model_list = os.listdir(models_save_path)
+    model_list = [f for f in os.listdir(models_save_path) if f.endswith('.h5') and 'MAE' in f]
 
     inputFile = './data/沪深300指数.xlsx'
     inputPd = excel2Pd(inputFile)
@@ -32,7 +36,7 @@ if __name__ == '__main__':
 
     # 下面是ZhaoYing修改添加训练数据的地方----------------------------------------------------------------------------------
     # 需要指定数据里的最新时间
-    new_time = np.datetime64('2020-08-05')
+    new_time = np.datetime64('2020-08-07')
     # 指定用于训练的列名
     col_data = ['市盈率', '市盈率(TTM)', '市净率', '开盘价', '最高价', '最低价', '前收盘价', '涨跌幅', '振幅', '换手率', '指数成分上涨数量', '指数成分下跌数量',
                 '近期创阶段新高', '近期创阶段新低', '连涨天数', '连跌天数', '向上有效突破5日均线', '向下有效突破5日均线', '向上有效突破10日均线', '向下有效突破10日均线',
@@ -44,7 +48,9 @@ if __name__ == '__main__':
     all_predict_res = {}
 
     for m in model_list:
-        if model_name_pre in m:
+        thisModelMae = int(re.split('_MAE|.h5',m)[1])
+        #if model_name_pre in m:
+        if model_mae > thisModelMae:
             model_name = models_save_path + '/' + m
             model = load_model(model_name)
             #print("Using loaded model %s to predict..." %m)
